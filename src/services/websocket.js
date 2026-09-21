@@ -1,32 +1,46 @@
-// Simulated WebSocket Stream for Live Events
+import { MOCK_MODE } from './api';
+
 class EventStreamService {
   constructor() {
-    this.listeners = [];
+    this.telemetryListeners = [];
+    this.alertListeners = [];
     this.intervalId = null;
     this.isStreaming = false;
   }
 
-  subscribe(callback) {
-    this.listeners.push(callback);
-    if (!this.isStreaming) {
-      this.startStream();
+  subscribeTelemetry(callback) {
+    this.telemetryListeners.push(callback);
+    if (!this.isStreaming && MOCK_MODE) {
+      this.startMockStream();
     }
     return () => {
-      this.listeners = this.listeners.filter(cb => cb !== callback);
-      if (this.listeners.length === 0) {
+      this.telemetryListeners = this.telemetryListeners.filter(cb => cb !== callback);
+      if (this.telemetryListeners.length === 0 && this.alertListeners.length === 0) {
         this.stopStream();
       }
     };
   }
 
-  startStream() {
+  subscribeAlerts(callback) {
+    this.alertListeners.push(callback);
+    if (!this.isStreaming && MOCK_MODE) {
+      this.startMockStream();
+    }
+    return () => {
+      this.alertListeners = this.alertListeners.filter(cb => cb !== callback);
+      if (this.telemetryListeners.length === 0 && this.alertListeners.length === 0) {
+        this.stopStream();
+      }
+    };
+  }
+
+  startMockStream() {
     this.isStreaming = true;
     const sampleEvents = [
-      { id: "EVT-102", type: "TRANSACTION", account: "ACC-99120", amount: "₹12,400", riskScore: 18, status: "APPROVED", ip: "103.28.14.2" },
-      { id: "EVT-103", type: "AUTH_FAILURE", account: "ACC-44129", amount: "-", riskScore: 65, status: "ALERT", ip: "185.220.101.5" },
-      { id: "EVT-104", type: "DEVICE_SWAP", account: "ACC-88219", amount: "-", riskScore: 72, status: "FLAGGED", ip: "45.142.120.12" },
-      { id: "EVT-105", type: "TRANSACTION", account: "ACC-89214", amount: "₹50,000", riskScore: 94, status: "BLOCKED", ip: "185.220.101.5" },
-      { id: "EVT-106", type: "UPI_PAYMENT", account: "ACC-30192", amount: "₹450", riskScore: 8, status: "APPROVED", ip: "14.98.112.45" },
+      { id: "EVT-9001", type: "TRANSACTION", account: "ACC-892140", amount: "₹50,000", riskScore: 94, status: "BLOCKED", ip: "185.220.101.5" },
+      { id: "EVT-9000", type: "AUTH_FAILURE", account: "ACC-109923", amount: "-", riskScore: 58, status: "ALERT", ip: "185.220.101.5" },
+      { id: "EVT-8999", type: "DEVICE_SWAP", account: "ACC-892140", amount: "-", riskScore: 72, status: "FLAGGED", ip: "45.142.120.12" },
+      { id: "EVT-8998", type: "UPI_PAYMENT", account: "ACC-410293", amount: "₹1,250", riskScore: 12, status: "APPROVED", ip: "103.21.124.90" }
     ];
 
     let counter = 0;
@@ -37,9 +51,26 @@ class EventStreamService {
         id: `EVT-${Math.floor(1000 + Math.random() * 9000)}`,
         timestamp: new Date().toLocaleTimeString('en-US', { hour12: false })
       };
-      this.listeners.forEach(cb => cb(newEvent));
+      this.telemetryListeners.forEach(cb => cb(newEvent));
+
+      // Also trigger fraud alert if critical score
+      if (newEvent.riskScore >= 85 && this.alertListeners.length > 0) {
+        this.alertListeners.forEach(cb => cb({
+          id: `ALT-2026-${Math.floor(8800 + Math.random() * 100)}`,
+          title: "Real-Time Correlated Fraud Alert",
+          category: "CORRELATED_ATTACK_CHAIN",
+          severity: "CRITICAL",
+          riskScore: newEvent.riskScore,
+          status: "NEW",
+          assignedTo: "Unassigned",
+          affectedAccount: newEvent.account,
+          affectedUser: "Vikram Sharma",
+          timestamp: newEvent.timestamp,
+          summary: `High risk transaction event [${newEvent.id}] triggered STOMP alert broadcast.`
+        }));
+      }
       counter++;
-    }, 2500); // New event every 2.5 seconds
+    }, 2500);
   }
 
   stopStream() {

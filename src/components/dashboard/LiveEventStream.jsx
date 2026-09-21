@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { eventStreamService } from '../../services/websocket';
-import { Activity, ShieldAlert, Laptop, DollarSign, CheckCircle2 } from 'lucide-react';
 
 export default function LiveEventStream() {
   const [events, setEvents] = useState([
@@ -11,7 +10,7 @@ export default function LiveEventStream() {
   ]);
 
   useEffect(() => {
-    const unsubscribe = eventStreamService.subscribe((newEvent) => {
+    const unsubscribe = eventStreamService.subscribeTelemetry((newEvent) => {
       setEvents(prev => [newEvent, ...prev.slice(0, 15)]);
     });
     return () => unsubscribe();

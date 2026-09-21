@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Bell, ShieldAlert, CheckCircle, Clock, ArrowRight, User } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { eventStreamService } from '../../services/websocket';
 
-export default function AlertCenter({ alerts, onUpdateStatus }) {
+export default function AlertCenter({ alerts: initialAlerts, onUpdateStatus }) {
+  const [alerts, setAlerts] = useState(initialAlerts || []);
   const [filter, setFilter] = useState('ALL');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setAlerts(initialAlerts || []);
+  }, [initialAlerts]);
+
+  useEffect(() => {
+    const unsubscribe = eventStreamService.subscribeAlerts((newAlert) => {
+      setAlerts(prev => [newAlert, ...prev]);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const filtered = alerts.filter(a => filter === 'ALL' || a.status === filter || a.severity === filter);
 
@@ -13,7 +26,7 @@ export default function AlertCenter({ alerts, onUpdateStatus }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-sm font-mono font-semibold text-slate-200 uppercase tracking-wider">SECURITY INCIDENT ALERT CENTER</h3>
-          <p className="text-xs text-slate-400">SOC Alert triage workflow, severity assignment, and investigation dispatch</p>
+          <p className="text-xs text-slate-400">SOC Alert triage workflow, severity assignment, and real-time STOMP alert stream</p>
         </div>
 
         {/* Status Filters */}
@@ -56,6 +69,7 @@ export default function AlertCenter({ alerts, onUpdateStatus }) {
                   <option value="ACKNOWLEDGED">ACKNOWLEDGED</option>
                   <option value="INVESTIGATING">INVESTIGATING</option>
                   <option value="RESOLVED">RESOLVED</option>
+                  <option value="FALSE_POSITIVE">FALSE_POSITIVE</option>
                 </select>
               </div>
             </div>
