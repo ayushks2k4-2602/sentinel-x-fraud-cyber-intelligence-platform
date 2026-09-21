@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-[#070A12] text-slate-100 font-sans;
+  }
+}
+
+/* Custom Scrollbar for SOC density */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #070A12;
+}
+::-webkit-scrollbar-thumb {
+  background: #1E293B;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Glassmorphism Cards */
+.glass-panel {
+  background: rgba(15, 22, 38, 0.7);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-hover {
+  transition: all 0.2s ease-in-out;
+}
+.glass-panel-hover:hover {
+  background: rgba(20, 30, 52, 0.85);
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+/* Glowing Badges */
+.badge-critical {
+  @apply bg-rose-950/80 text-rose-300 border border-rose-600/50 shadow-glow-rose;
+}
+.badge-high {
+  @apply bg-amber-950/80 text-amber-300 border border-amber-600/50 shadow-glow-amber;
+}
+.badge-medium {
+  @apply bg-blue-950/80 text-blue-300 border border-blue-600/50 shadow-glow-blue;
+}
+.badge-low {
+  @apply bg-emerald-950/80 text-emerald-300 border border-emerald-600/50;
+}
+
+/* Radar pulse background animation */
+@keyframes radar-sweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-sweep-line {
+  animation: radar-sweep 4s linear infinite;
+}
