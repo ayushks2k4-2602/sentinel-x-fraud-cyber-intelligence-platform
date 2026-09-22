@@ -103,7 +103,12 @@ public class ThreatIndicatorService {
                     .build();
         }
 
-        return threatIndicatorSourceRepository.save(sourceEntity);
+        ThreatIndicatorSourceEntity savedSource = threatIndicatorSourceRepository.save(sourceEntity);
+        if (indicator.getSources() != null) {
+            indicator.getSources().removeIf(s -> s.getId().equals(savedSource.getId()) || (s.getProviderId() != null && s.getProviderId().equals(savedSource.getProviderId())));
+            indicator.getSources().add(savedSource);
+        }
+        return savedSource;
     }
 
     public Optional<ThreatIndicatorEntity> findByCanonicalValueAndType(String indicatorType, String canonicalValue) {

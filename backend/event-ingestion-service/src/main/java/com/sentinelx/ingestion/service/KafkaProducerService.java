@@ -5,6 +5,7 @@ import com.sentinelx.ingestion.dto.EventEnvelopeDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.CompletableFuture;
@@ -23,9 +24,9 @@ public class KafkaProducerService {
         String partitionKey = event.getAccountId() != null ? event.getAccountId() : event.getEventId();
         log.info("Publishing Financial Event [{}] to topic [{}] with key [{}]", event.getEventId(), KafkaConfig.TOPIC_FINANCIAL_EVENTS, partitionKey);
         
-        CompletableFuture<?> future = kafkaTemplate.send(KafkaConfig.TOPIC_FINANCIAL_EVENTS, partitionKey, event);
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(KafkaConfig.TOPIC_FINANCIAL_EVENTS, partitionKey, event);
         future.whenComplete((result, ex) -> {
-            if (ex == null) {
+            if (ex == null && result != null) {
                 log.debug("Event [{}] successfully published to partition [{}]", event.getEventId(), result.getRecordMetadata().partition());
             } else {
                 log.error("Failed to publish event [{}] to Kafka", event.getEventId(), ex);
